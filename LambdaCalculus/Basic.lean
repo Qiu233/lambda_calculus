@@ -120,5 +120,51 @@ def subst_free (M : Lam) (i : ℕ) (j : Lam) :=
     Lam.abs (subst_free m (i + 1) (j.inc))
 
 
+inductive Beta : Lam → Lam → Prop where
+  | red m n : Beta (Lam.app (Lam.abs m) n) (m.subst_free 0 (n.inc) |>.dec)
+  | appl m n k : Beta m n → Beta (Lam.app m k) (Lam.app n k)
+  | appr m n k : Beta m n → Beta (Lam.app k m) (Lam.app k n)
+  | abs m n : Beta m n → Beta (Lam.abs m) (Lam.abs n)
+
+infixr:80 " →β " => Beta
+
+@[simp]
+lemma Beta.var : (Lam.var x) →β M → False := by
+  intro h
+  cases h
+
+lemma Beta.abs_iff : (Lam.abs m) →β M ↔ ∃ n, M = Lam.abs n ∧ m →β n := by
+  apply Iff.intro
+  . intro h1
+    cases h1
+    rename Lam => n
+    use n
+  . intro ⟨n, h⟩
+    rw [h.1]
+    apply Beta.abs _ _ h.2
+
+lemma Beta.abs_congr : (Lam.abs m) →β (Lam.abs n) ↔ m →β n := by
+  apply Iff.intro
+  . intro h
+    cases h
+    assumption
+  . apply Beta.abs
+
+-- should finite closure?
+inductive Betas : Lam → Lam → Type where
+  | refl : Betas m m
+  | red : m →β n → Betas m n
+  | trans : Betas m n → Betas n k → Betas m k
+
+infixr:80 " ↠β " => Betas
+
+-- theorem Beta.confluence : M →β N → M →β N' → ∃ K, N →β K ∧ N' →β K := by
+--   intro h1 h2
+--   cases h1 with
+--   | appl m n k h => sorry
+--   | appr m n k h => sorry
+--   | abs m n h => sorry
+--   | red m n => sorry
 
 end Lam
+#check Prod
